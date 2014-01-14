@@ -23,28 +23,49 @@ export function parse_terms_count(filename : string) : number {
 }
 
 /**
- * Class for one elementary item in the problem.
+ * Class for one term.
  */
-export class Item {
+export class Term {
+	private _name : string;
 	private _weight : number;
-	private _price : number;
 
-	constructor(private weight : number, private price : number) {
+	constructor(private name : string, private weight : number) {
+		this._name = name;
 		this._weight = weight;
-		this._price = price;
 	}
 
-	public getPrice() : number {
-		return this._price;
-	}
-
-	public setPrice(price : number) : Item {
-		this._price = price;
-		return this;
+	public getName() : string {
+		return this._name;
 	}
 
 	public getWeight() : number {
 		return this._weight;
+	}
+
+	public clone() : Term {
+		return new Term(this._name, this._weight);
+	}
+}
+
+/**
+ * Class which contains one clause terms in one group.
+ */
+export class Clause {
+	private _terms : Term[];
+	private _negations;
+
+	constructor(private terms : Term[], private negations) {
+		this._terms = terms.slice(0);
+		this._negations = negations;
+	}
+
+	public isTrue(values) : boolean {
+		for (var i = 0; i < this._terms.length; i++) {
+			if ((!this._negations[this._terms[i].getName()] && values[this._terms[i].getName()]) || (this._negations[this._terms[i].getName()] && !values[this._terms[i].getName()])) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
@@ -53,37 +74,94 @@ export class Item {
  */
 export class Instance {
 	private _id : number;
-	private _maxWeight : number;
-	private _items : Item[];
+	private _terms : Term[];
+	private _clauses : Clause[];
 
-	constructor(private id : number, private maxWeight :number) {
+	constructor(private id : number, private terms : Term[], private clauses : Clause[]) {
 		this._id = id;
-		this._maxWeight = maxWeight;
-		this._items = [];
-	}
-
-	public addItem(item : Item) : Instance {
-		this._items.push(item);
-
-		return this;
-	}
-
-	public getItems() : Item[] {
-		return this._items;
+		this._terms = terms.slice(0);
+		this._clauses = clauses.slice(0);
 	}
 
 	public getId() : number {
 		return this._id;
 	}
 
-	public getMaxWeight() : number {
-		return this._maxWeight;
+	public getTerms() : Term[] {
+		return this._terms.slice(0);
+	}
+
+	public getClauses() : Clause[] {
+		return this._clauses.slice(0);
+	}
+
+	public isTrue(solution : Sat) : boolean {
+		for (var i = 0; i < this._clauses.length; i++) {
+			if (!this._clauses[i].isTrue(solution.getValues())) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+/**
+ * Class for one SAT (solution).
+ */
+export class Sat {
+	private _weight : number;
+	private _values;
+
+	constructor(private terms : Term[]) {
+		this._weight = 0;
+		this._values = {};
+		for (var i = 0; i < terms.length; i++) {
+			this._values[terms[i].getName()] = false;
+		}
+	}
+
+	public clone() : Sat {
+		var sat = new Sat([]);
+		sat._values = {};
+		for (var key in this._values) {
+			sat._values[key] = this._values[key];
+		}
+		sat._weight = this._weight;
+		return sat;
+	}
+
+	public getWeight() : number {
+		return this._weight;
+	}
+
+	public getValues() {
+		var values = {};
+		for (var key in this._values) {
+			values[key] = this._values[key];
+		}
+		return values;
+	}
+
+	public getValue(term : Term) {
+		return this._values[term.getName()];
+	}
+
+	public toggleValue(term : Term) : Sat {
+		if (this._values[term.getName()]) {
+			this._values[term.getName()] = false;
+			this._weight -= term.getWeight();
+		} else {
+			this._values[term.getName()] = true;
+			this._weight += term.getWeight();
+		}
+		return this;
 	}
 }
 
 /**
  * Parser of input files.
  */
+/*
 class Parser {
 	private _fileContent : string[];
 	private _index : number;
@@ -136,101 +214,23 @@ class Parser {
 		return instance;
 	}
 }
-
-/**
- * Class for one SAT (solution).
- */
-export class Sat {
-	private _weight : number;
-	private _price : number;
-	private _items : Item[];
-
-	constructor() {
-		this._reset();
-	}
-
-	public clone() : Sat {
-		var knapsack = new Sat();
-		knapsack._weight = this._weight;
-		knapsack._price = this._price;
-		knapsack._items = this._items.slice(0);
-		return knapsack;
-	}
-
-	private _reset() : Sat {
-		this._weight = 0;
-		this._price = 0;
-		this._items = [];
-
-		return this;
-	}
-
-	private _itemIndex(item : Item) : number {
-		return this._items.indexOf(item);
-	}
-
-	public contains(item : Item) : boolean {
-    	return this._itemIndex(item) > -1;
-	}
-
-	public addItem(item : Item) : Sat {
-		if (!this.contains(item)) {
-			this._items.push(item);
-			this._weight += item.getWeight();
-			this._price += item.getPrice();
-		}
-
-		return this;
-	}
-
-	public removeItem(item : Item) : Sat {
-		if (this.contains(item)) {
-			var index = this._itemIndex(item);
-			this._weight -= this._items[index].getWeight();
-			this._price -= this._items[index].getPrice();
-			this._items.splice(index, 1);
-		}
-
-		return this;
-	}
-
-	public setItems(items : Item[]) : Sat {
-		this._reset();
-		for (var i = 0; i < items.length; i++) {
-			this.addItem(items[i]);
-		}
-
-		return this;
-	}
-
-	public getWeight() : number {
-		return this._weight;
-	}
-
-	public getPrice() : number {
-		return this._price;
-	}
-
-	public getItems() : Item[] {
-		return this._items;
-	}
-}
-
+*/
 /**
  * Handles formatting of output.
  */
 export class OutputFormatter {
-	public printSolution(instance : Instance, solution : Knapsack) {
-		var items_string = "";
-		var instanceItems = instance.getItems();
-		for (var i = 0; i < instanceItems.length; i++) {
-			if (solution.contains(instanceItems[i])) {
-				items_string += " 1"
+	public printSolution(instance : Instance, solution : Sat) {
+		var terms_string = "";
+		var instanceTerms = instance.getTerms();
+		for (var i = 0; i < instanceTerms.length; i++) {
+			terms_string += "\n" + instanceTerms[i].getName();
+			if (solution.getValue(instanceTerms[i])) {
+				terms_string += " => 1";
 			} else {
-				items_string += " 0"
+				terms_string += " => 0";
 			}
 		}
-		console.log(instance.getId() + " " + instance.getItems().length + " " + solution.getPrice() + " " + items_string);
+		console.log(instance.getId() + " " + solution.getWeight() + " " + terms_string);
 	}
 }
 
@@ -313,12 +313,12 @@ export class ProblemSolver {
 		return this;
 	}
 
-	public findSolution(items : Item[], maxWeight : number) : Sat {
+	public findSolution(instance : Instance) : Sat {
 		if (this._timer) {
 			this._timer.onBegin();
 		}
 
-		var solution = this._find(items.slice(0), maxWeight);
+		var solution = this._find(instance);
 
 		if (this._timer) {
 			this._timer.onFinish();
@@ -327,8 +327,64 @@ export class ProblemSolver {
 		return solution;
 	}
 
-	public _find(items : Item[], maxWeight : number) : Sat {
+	public _find(instance : Instance) : Sat {
 		throw new Error('This method is abstract. Override it please.');
+	}
+}
+
+/**
+ * Parser of input files.
+ */
+class MemoryParser {
+	private _index : number;
+	private _data;
+
+	constructor() {
+		this._index = 0;
+		this._data = [
+			[
+				"1 2 3",
+				"4 5 6"
+			],
+		];
+	}
+
+	public hasNextInstance() : boolean {
+		return this._index < this._data.length;
+	}
+
+	public buildNextInstance() : Instance {
+		var id = this._index;
+		var clauseStrings = this._data[this._index];
+
+		var terms = {};
+		var clauses : Clause[] = [];
+		for(var i = 0; i < clauseStrings.length; i++) {
+			var clauseParts : string[] = clauseStrings[i].split(/\s+/);
+			var clauseTerms : Term[] = [];
+			var negations = {};
+			for (var j = 0; j < clauseParts.length; j++) {
+				var term = terms[clauseParts[j]];
+				var value = parseInt(clauseParts[j]);
+				if (!term) {
+					term = new Term(clauseParts[j], value < 0 ? -1 * value : value);
+					terms[term.getName()] = term;
+				}
+				clauseTerms.push(term);
+				negations[term.name] = value < 0;
+			}
+			clauses.push(new Clause(clauseTerms, negations));
+		}
+		var termsInArray = [];
+		for (var key in terms) {
+			termsInArray.push(terms[key]);
+		}
+
+		var instance = new Instance(id, termsInArray, clauses);
+
+		this._index += 1;
+
+		return instance;
 	}
 }
 
@@ -337,14 +393,14 @@ export class ProblemSolver {
  */
 export function run(filepath : string, problemSolver : ProblemSolver, outputFormatter : OutputFormatter = null, timer : SystemTimer = null) {
 	var name = parse_terms_count(filepath);
-	var parser = new Parser(filepath);
+	var parser = new MemoryParser();
 	if (timer) {
 		problemSolver.setTimer(timer);
 	}
 
 	while (parser.hasNextInstance()) {
 		var instance = parser.buildNextInstance();
-		var solution = problemSolver.findSolution(instance.getItems(), instance.getMaxWeight());
+		var solution = problemSolver.findSolution(instance);
 		if (outputFormatter) {
 			outputFormatter.printSolution(instance, solution);
 		}

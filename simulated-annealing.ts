@@ -1,22 +1,28 @@
 import common = require("./common");
 
 class SimulatedAnnealing extends common.ProblemSolver {
-	public _find(items : common.Item[], maxWeight : number) : common.Sat {
-		var t = 5 * items.length;
-		var inner_loop_limit = items.length;
-		var solution = new common.Sat();
+	public _find(instance : common.Instance) : common.Sat {
+		var terms = instance.getTerms();
+		var t = 5 * terms.length;
+		var inner_loop_limit = terms.length;
+		var solution = new common.Sat(terms);
+		for (var i = 0; i < terms.length; i++) {
+			if (i%2 == 0) {
+				solution.toggleValue(terms[i]);
+			}
+		}
 		// var iteration = 0;
 
 		while (t > this.frozen()) {
 			var i = 0;
 			while (i < inner_loop_limit) {
-				var next = this.randomNeighbour(solution, items);
-				var cost = solution.getPrice() - next.getPrice(); // Higher price is better
-				if (next.getWeight() <= maxWeight && (cost < 0 || this.accept(cost, t))) {
+				var next = this.randomNeighbour(solution, terms);
+				var cost = solution.getWeight() - next.getWeight(); // Higher weight is better
+				if ((cost < 0 || this.accept(cost, t)) && instance.isTrue(next)) {
 					solution = next;
 				}
 				i++;
-				// console.log(iteration + " " + solution.getPrice());
+				// console.log(iteration + " " + solution.getWeight());
 				// iteration++;
 			}
 			t = this.cool(t);
@@ -29,15 +35,10 @@ class SimulatedAnnealing extends common.ProblemSolver {
 		return 4;
 	}
 
-	private randomNeighbour(solution : common.Sat, items : common.Item[]) : common.Sat {
-		var index = Math.floor(Math.random() * items.length);
+	private randomNeighbour(solution : common.Sat, terms : common.Term[]) : common.Sat {
+		var index = Math.floor(Math.random() * terms.length);
 		var next = solution.clone();
-		if (next.contains(items[index])) {
-			next.removeItem(items[index]);
-		} else {
-			next.addItem(items[index]);
-		}
-
+		next.toggleValue(terms[index]);
 		return next;
 	}
 
