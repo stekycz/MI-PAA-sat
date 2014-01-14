@@ -1,0 +1,6 @@
+.DS_Store
+*.png
+*.sublime*
+*.js
+*.svg
+/node_modules
