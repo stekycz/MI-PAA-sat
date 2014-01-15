@@ -14,7 +14,7 @@ set tics scale 0.75
 
 set title "Annealing"
 set xlabel "Iteration"
-set ylabel "Cost"
+set ylabel "Weight"
 
 set grid
 
