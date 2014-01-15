@@ -72,7 +72,7 @@ function build_command(filename : string) : string {
 	if (time_measure) {
 		command += " -m";
 	} else if (test) {
-		command += " -t | diff " + test + "/sat_" + common.parse_terms_count(filename) + ".sol.dat -";
+		command += " -t | diff " + test + "/sat." + common.parse_terms_count(filename) + ".sol.dat -";
 	}
 
 	return command;
