@@ -61,7 +61,9 @@ export class Clause {
 
 	public isTrue(values) : boolean {
 		for (var i = 0; i < this._terms.length; i++) {
-			if ((!this._negations[this._terms[i].getName()] && values[this._terms[i].getName()]) || (this._negations[this._terms[i].getName()] && !values[this._terms[i].getName()])) {
+			if ((!this._negations[this._terms[i].getName()] && values[this._terms[i].getName()])
+				|| (this._negations[this._terms[i].getName()] && !values[this._terms[i].getName()])
+			) {
 				return true;
 			}
 		}
@@ -343,8 +345,10 @@ class MemoryParser {
 		this._index = 0;
 		this._data = [
 			[
-				"1 2 3",
-				"4 5 6"
+				"1 -2 -3",
+				"3 4 5",
+				"-4",
+				"-5"
 			],
 		];
 	}
@@ -367,11 +371,12 @@ class MemoryParser {
 				var term = terms[clauseParts[j]];
 				var value = parseInt(clauseParts[j]);
 				if (!term) {
-					term = new Term(clauseParts[j], value < 0 ? -1 * value : value);
+					var termValue = value < 0 ? -1 * value : value;
+					term = new Term("" + termValue, termValue);
 					terms[term.getName()] = term;
 				}
 				clauseTerms.push(term);
-				negations[term.name] = value < 0;
+				negations[term.getName()] = value < 0 ? true : false;
 			}
 			clauses.push(new Clause(clauseTerms, negations));
 		}

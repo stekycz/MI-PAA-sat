@@ -3,15 +3,15 @@ import common = require("./common");
 class SimulatedAnnealing extends common.ProblemSolver {
 	public _find(instance : common.Instance) : common.Sat {
 		var terms = instance.getTerms();
-		var t = 5 * terms.length;
-		var inner_loop_limit = terms.length;
+		var t = 2 * terms.length;
+		var inner_loop_limit = 10 * terms.length;
 		var solution = new common.Sat(terms);
 		for (var i = 0; i < terms.length; i++) {
 			if (i%2 == 0) {
 				solution.toggleValue(terms[i]);
 			}
 		}
-		// var iteration = 0;
+		//var iteration = 0;
 
 		while (t > this.frozen()) {
 			var i = 0;
@@ -22,8 +22,8 @@ class SimulatedAnnealing extends common.ProblemSolver {
 					solution = next;
 				}
 				i++;
-				// console.log(iteration + " " + solution.getWeight());
-				// iteration++;
+				//console.log(iteration + " " + solution.getWeight());
+				//iteration++;
 			}
 			t = this.cool(t);
 		}
@@ -32,7 +32,7 @@ class SimulatedAnnealing extends common.ProblemSolver {
 	}
 
 	private frozen() : number {
-		return 4;
+		return 0.25;
 	}
 
 	private randomNeighbour(solution : common.Sat, terms : common.Term[]) : common.Sat {
