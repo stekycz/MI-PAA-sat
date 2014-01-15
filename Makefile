@@ -4,7 +4,7 @@ TERMS_COUNT = 10
 # Compilation
 
 all:
-	tsc --module commonjs common.ts simulated-annealing.ts app.ts parallel-runner.ts
+	tsc --module commonjs common.ts simulated-annealing.ts app.ts parallel-runner.ts generator.ts
 
 clean:
 	rm *.js
@@ -31,6 +31,7 @@ graph:
 	gnuplot graphs/graph.gplot
 
 annealing: all
-	node app.js -f ./zadani/sat.4.inst.dat > graphs/iterations.dat
+	node generator.js -i 1 -t 3 -r 3 > ./zadani/sat.3.3.inst.dat
+	node app.js -f ./zadani/sat.3.3.inst.dat > graphs/iterations.dat
 	gnuplot graphs/annealing.gplot
 	svg2png graphs/annealing.svg graphs/annealing.png
