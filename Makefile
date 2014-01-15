@@ -1,4 +1,4 @@
-QUICK_TERMS_COUNT = 3
+QUICK_TERMS_COUNT = 5
 TERMS_COUNT = 10
 
 # Compilation
@@ -29,3 +29,8 @@ graph-quick:
 graph:
 	make -s time-measure > graphs/times.dat
 	gnuplot graphs/graph.gplot
+
+annealing: all
+	node app.js -f ./zadani/sat.4.inst.dat > graphs/iterations.dat
+	gnuplot graphs/annealing.gplot
+	svg2png graphs/annealing.svg graphs/annealing.png
