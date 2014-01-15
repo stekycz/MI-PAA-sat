@@ -2,6 +2,6 @@
 *.sublime*
 /node_modules
 *.js
-*.dat
+graphs/*.dat
 *.svg
 *.png
