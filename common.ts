@@ -19,7 +19,7 @@ export function get_option(value : any, default_value : any = null, value_format
  * Parses count of terms in instances in given file.
  */
 export function parse_terms_count(filename : string) : number {
-	return parseFloat(filename.trim().replace(/^.*sat_/, '').replace(/_\d+(\.\d+)?\.inst\.dat$/, ''));
+	return parseInt(filename.trim().replace(/^.*sat\./, '').replace(/\.inst\.dat$/, ''));
 }
 
 /**
@@ -114,7 +114,7 @@ export class Sat {
 	private _weight : number;
 	private _values;
 
-	constructor(private terms : Term[]) {
+	constructor(terms : Term[]) {
 		this._weight = 0;
 		this._values = {};
 		for (var i = 0; i < terms.length; i++) {
@@ -163,26 +163,40 @@ export class Sat {
 /**
  * Parser of input files.
  */
-/*
 class Parser {
-	private _fileContent : string[];
-	private _index : number;
 	private _filepath : string;
 	private _fileLoaded : boolean;
+	private _data : any;
+	private _index : number;
 
 	constructor(private filepath : string) {
-		this._fileContent = [];
-		this._index = 0;
 		this._filepath = filepath;
 		this._fileLoaded = false;
+		this._data = [];
+		this._index = 0;
 	}
 
 	private _loadFileContent() {
 		if (this._fileLoaded === false) {
 			var rows = fs.readFileSync(this._filepath).toString("utf8").split(/\n/);
+			var data = [];
+			var loadingData = false;
 			for (var i = 0; i < rows.length; i++) {
-				if (rows[i].trim() != '') {
-					this._fileContent.push(rows[i]);
+				var row = rows[i].trim();
+				if (row == '' || row.substring(0, 1) == 'c') {
+					if (data.length > 0) {
+						this._data.push(data);
+						data = [];
+					}
+					loadingData = false;
+				} else if (row.substring(0, 1) == 'p') {
+					if (data.length > 0) {
+						this._data.push(data);
+						data = [];
+					}
+					loadingData = true;
+				} else if (loadingData && row.substring(row.length - 1) == '0') {
+					data.push(row.substring(0, row.length - 1).trim());
 				}
 			}
 			this._fileLoaded = true;
@@ -192,31 +206,47 @@ class Parser {
 	public hasNextInstance() : boolean {
 		this._loadFileContent();
 
-		return this._index < this._fileContent.length;
+		return this._index < this._data.length;
 	}
 
 	public buildNextInstance() : Instance {
 		this._loadFileContent();
 
-		var fields = this._fileContent[this._index].split(/\s+/);
-		var numbers = [];
-		for(var i = 0; i < fields.length; i++) {
-			numbers.push(parseInt(fields[i]));
+		var id = this._index;
+		var clauseStrings = this._data[this._index];
+
+		var terms = {};
+		var clauses : Clause[] = [];
+		for(var i = 0; i < clauseStrings.length; i++) {
+			var clauseParts : string[] = clauseStrings[i].split(/\s+/);
+			var clauseTerms : Term[] = [];
+			var negations = {};
+			for (var j = 0; j < clauseParts.length; j++) {
+				var term = terms[clauseParts[j]];
+				var value = parseInt(clauseParts[j]);
+				if (!term) {
+					var termValue = value < 0 ? -1 * value : value;
+					term = new Term("" + termValue, termValue);
+					terms[term.getName()] = term;
+				}
+				clauseTerms.push(term);
+				negations[term.getName()] = value < 0 ? true : false;
+			}
+			clauses.push(new Clause(clauseTerms, negations));
+		}
+		var termsInArray = [];
+		for (var key in terms) {
+			termsInArray.push(terms[key]);
 		}
 
-		var instance = new Instance(numbers[0], numbers[2]);
-		for (var i = 0; i < numbers[1]; i++) {
-			var index = 3 + (2 * i);
-			var item = new Item(numbers[index], numbers[index + 1]);
-			instance.addItem(item);
-		}
+		var instance = new Instance(id, termsInArray, clauses);
 
 		this._index += 1;
 
 		return instance;
 	}
 }
-*/
+
 /**
  * Handles formatting of output.
  */
@@ -232,7 +262,7 @@ export class OutputFormatter {
 				terms_string += " => 0";
 			}
 		}
-		console.log(instance.getId() + " " + solution.getWeight() + " " + terms_string);
+		console.log(instance.getId() + " " + solution.getWeight() + "" + terms_string);
 	}
 }
 
@@ -335,70 +365,11 @@ export class ProblemSolver {
 }
 
 /**
- * Parser of input files.
- */
-class MemoryParser {
-	private _index : number;
-	private _data;
-
-	constructor() {
-		this._index = 0;
-		this._data = [
-			[
-				"1 -2 -3",
-				"3 4 5",
-				"-4",
-				"-5"
-			],
-		];
-	}
-
-	public hasNextInstance() : boolean {
-		return this._index < this._data.length;
-	}
-
-	public buildNextInstance() : Instance {
-		var id = this._index;
-		var clauseStrings = this._data[this._index];
-
-		var terms = {};
-		var clauses : Clause[] = [];
-		for(var i = 0; i < clauseStrings.length; i++) {
-			var clauseParts : string[] = clauseStrings[i].split(/\s+/);
-			var clauseTerms : Term[] = [];
-			var negations = {};
-			for (var j = 0; j < clauseParts.length; j++) {
-				var term = terms[clauseParts[j]];
-				var value = parseInt(clauseParts[j]);
-				if (!term) {
-					var termValue = value < 0 ? -1 * value : value;
-					term = new Term("" + termValue, termValue);
-					terms[term.getName()] = term;
-				}
-				clauseTerms.push(term);
-				negations[term.getName()] = value < 0 ? true : false;
-			}
-			clauses.push(new Clause(clauseTerms, negations));
-		}
-		var termsInArray = [];
-		for (var key in terms) {
-			termsInArray.push(terms[key]);
-		}
-
-		var instance = new Instance(id, termsInArray, clauses);
-
-		this._index += 1;
-
-		return instance;
-	}
-}
-
-/**
  * Runs solving of instances in given file using given solver and show output using next parameters.
  */
 export function run(filepath : string, problemSolver : ProblemSolver, outputFormatter : OutputFormatter = null, timer : SystemTimer = null) {
 	var name = parse_terms_count(filepath);
-	var parser = new MemoryParser();
+	var parser = new Parser(filepath);
 	if (timer) {
 		problemSolver.setTimer(timer);
 	}
