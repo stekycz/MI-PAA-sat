@@ -6,10 +6,7 @@ class SimulatedAnnealing extends common.ProblemSolver {
 		var t = instance.getClauses().length * terms.length;
 		var inner_loop_limit = 15;
 		var solution = new common.Sat(terms);
-		for (var i = 0; i < (terms.length / 2); i++) {
-			solution.toggleValue(terms[i]);
-		}
-		//var iteration = 0;
+		var iteration = 0;
 
 		while (t > this.frozen()) {
 			var i = 0;
@@ -21,8 +18,8 @@ class SimulatedAnnealing extends common.ProblemSolver {
 					solution = next;
 				}
 				i++;
-				//console.log(iteration + " " + solution.getWeight());
-				//iteration++;
+				console.log(iteration + " " + solution.getWeight());
+				iteration++;
 			}
 			t = this.cool(t);
 		}
