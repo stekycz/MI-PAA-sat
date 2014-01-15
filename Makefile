@@ -1,5 +1,5 @@
-QUICK_TERMS_COUNT = 20
-TERMS_COUNT = 50
+QUICK_TERMS_COUNT = 3
+TERMS_COUNT = 10
 
 # Compilation
 
@@ -23,9 +23,9 @@ time-measure: all
 	node parallel-runner.js -i ./zadani -d $(TERMS_COUNT) -m
 
 graph-quick:
-	make -s time-measure-quick > times.dat
-	gnuplot graph.gplot
+	make -s time-measure-quick > graphs/times.dat
+	gnuplot graphs/graph.gplot
 
 graph:
-	make -s time-measure > times.dat
-	gnuplot graph.gplot
+	make -s time-measure > graphs/times.dat
+	gnuplot graphs/graph.gplot

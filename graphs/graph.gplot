@@ -1,0 +1,33 @@
+reset
+
+# wxt
+#set terminal wxt size 1024,768 enhanced font 'Verdana,11' persist
+# png
+#set terminal pngcairo size 1024,768 enhanced font 'Verdana,11'
+#set output 'graphs/times.png'
+# svg
+set terminal svg size 1024,768 fname 'Verdana, Helvetica, Arial, sans-serif' \
+fsize '11'
+set output 'graphs/times.svg'
+
+set border linewidth 1.5
+set style line 1 lc rgb '#ff0000' lt 1 lw 2 pt 7 pi -1 ps 1.5
+set style line 2 lc rgb '#00ff00' lt 1 lw 2 pt 7 pi -1 ps 1.5
+set style line 3 lc rgb '#ff00ff' lt 1 lw 2 pt 7 pi -1 ps 1.5
+set pointintervalbox 3
+
+set tics scale 0.75
+
+set xrange [28:42]
+set yrange [0.001:]
+
+set title "SAT times"
+set xlabel "Terms count"
+set ylabel "Time (s)"
+
+set logscale y
+set grid
+
+plot "graphs/times.dat" using 1:3 title "Average time" with linespoints ls 1,\
+	"graphs/times.dat" using 1:4 title "Minimum time" with linespoints ls 2,\
+	"graphs/times.dat" using 1:5 title "Maximum time" with linespoints ls 3

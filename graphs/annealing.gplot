@@ -1,0 +1,21 @@
+reset
+
+# wxt
+#set terminal wxt size 1024,768 enhanced font 'Verdana,11' persist
+# png
+#set terminal pngcairo size 1024,768 enhanced font 'Verdana,11'
+#set output 'graphs/annealing.png'
+# svg
+set terminal svg size 1024,768 fname 'Verdana, Helvetica, Arial, sans-serif' \
+fsize '11'
+set output 'graphs/annealing.svg'
+
+set tics scale 0.75
+
+set title "Annealing"
+set xlabel "Iteration"
+set ylabel "Cost"
+
+set grid
+
+plot "graphs/iterations.dat" using 1:2 title "Annealing" with linespoints
