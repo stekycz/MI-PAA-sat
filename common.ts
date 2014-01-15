@@ -195,6 +195,8 @@ class Parser {
 						data = [];
 					}
 					loadingData = true;
+				} else if (loadingData && row.substring(0, 1) == 'v') {
+					data.push(row.substring(1).trim());
 				} else if (loadingData && row.substring(row.length - 1) == '0') {
 					data.push(row.substring(0, row.length - 1).trim());
 				}
@@ -217,7 +219,8 @@ class Parser {
 
 		var terms = {};
 		var clauses : Clause[] = [];
-		for(var i = 0; i < clauseStrings.length; i++) {
+		var weights = clauseStrings[0].split(/\s+/);
+		for(var i = 1; i < clauseStrings.length; i++) {
 			var clauseParts : string[] = clauseStrings[i].split(/\s+/);
 			var clauseTerms : Term[] = [];
 			var negations = {};
@@ -226,7 +229,7 @@ class Parser {
 				var value = parseInt(clauseParts[j]);
 				if (!term) {
 					var termValue = value < 0 ? -1 * value : value;
-					term = new Term("" + termValue, termValue);
+					term = new Term("" + termValue, parseInt(weights[termValue - 1]));
 					terms[term.getName()] = term;
 				}
 				clauseTerms.push(term);
